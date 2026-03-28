@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Map Columns — ComplianceLog{% endblock %}
+{% block page_title %}Import CSV — Map Columns{% endblock %}
+{% block content %}
+<div style="max-width:680px">
+  <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px">
+    We found <strong style="color:var(--text)">{{ rows|length }}+ rows</strong> in your file.
+    Review the auto-detected column mapping below and adjust if needed, then click Import.
+  </div>
+
+  {% if rows %}
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header"><div class="card-title">Preview (first 3 rows)</div></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            {% for h in headers %}<th>{{ h }}</th>{% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            {% for h in headers %}<td style="font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ row[h] or '—' }}</td>{% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('import_confirm') }}">
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><div class="card-title">Step 2 — Map your columns</div></div>
+      <div style="padding:0 16px">
+        {% for h in headers %}
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="font-family:var(--mono);font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:3px 8px;color:var(--text-muted);min-width:160px;flex-shrink:0">{{ h }}</div>
+          <span style="color:var(--text-muted);font-size:12px">→</span>
+          <select name="map_{{ h }}" style="flex:1;font-size:12.5px">
+            {% for val, label in field_options %}
+            <option value="{{ val }}" {{ 'selected' if auto_map.get(h) == val }}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px 14px;font-size:12.5px;color:var(--text-muted);margin-bottom:16px">
+      Records with a matching <strong style="color:var(--text);font-family:var(--mono)">Reference Number</strong> will be updated.
+      All other rows will be created as new records.
+    </div>
+
+    <div style="display:flex;gap:10px">
+      <button type="submit" class="btn btn-primary">Import Records →</button>
+      <a href="{{ url_for('import_csv') }}" class="btn btn-secondary">Back</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

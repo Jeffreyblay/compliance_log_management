@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Import CSV — ComplianceLog{% endblock %}
+{% block page_title %}Import CSV{% endblock %}
+{% block content %}
+<div style="max-width:560px">
+  <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px">
+    Upload your existing compliance log as a CSV file. The system will auto-detect column headers,
+    let you confirm the mapping, then import all records. Records with a matching reference number
+    will be <strong>updated</strong> rather than duplicated — new rows will be added.
+  </div>
+
+  <form method="post" enctype="multipart/form-data">
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><div class="card-title">Step 1 — Upload your file</div></div>
+      <div style="padding:20px;text-align:center;border:2px dashed var(--border);border-radius:6px;margin:0 0 16px;background:var(--surface2)">
+        <div style="font-size:28px;margin-bottom:8px">📄</div>
+        <div style="font-size:14px;font-weight:500;margin-bottom:6px">Drop your CSV file here</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">.csv files only · UTF-8 encoding recommended</div>
+        <input type="file" name="csv_file" accept=".csv" required style="width:auto;cursor:pointer"/>
+      </div>
+      <div style="background:var(--surface2);border:1px solid #3b82f633;border-radius:6px;padding:12px 14px;font-size:12.5px;color:var(--text-muted)">
+        <strong style="color:var(--accent2)">💡 Supported date formats:</strong>
+        YYYY-MM-DD, DD/MM/YYYY, MM/DD/YYYY, DD-MM-YYYY, DD Mon YYYY
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Upload & Preview Mapping →</button>
+    <a href="{{ url_for('records') }}" class="btn btn-secondary" style="margin-left:8px">Cancel</a>
+  </form>
+</div>
+{% endblock %}

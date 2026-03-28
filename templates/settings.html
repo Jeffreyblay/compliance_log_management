@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Settings — ComplianceLog{% endblock %}
+{% block page_title %}Email Notification Settings{% endblock %}
+{% block content %}
+<div style="max-width:560px">
+  <form method="post">
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><div class="card-title">SMTP Configuration</div></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>SMTP Host</label>
+          <input type="text" name="smtp_host" value="{{ config.smtp_host }}" placeholder="smtp.gmail.com"/>
+        </div>
+        <div class="form-group">
+          <label>SMTP Port</label>
+          <input type="number" name="smtp_port" value="{{ config.smtp_port }}" placeholder="587"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>SMTP Username</label>
+        <input type="text" name="smtp_user" value="{{ config.smtp_user }}" placeholder="your@gmail.com"/>
+      </div>
+      <div class="form-group">
+        <label>SMTP Password / App Password</label>
+        <input type="password" name="smtp_password" value="{{ config.smtp_password }}" placeholder="App password from your email provider"/>
+      </div>
+      <div class="form-group">
+        <label>From Address</label>
+        <input type="email" name="from_address" value="{{ config.from_address }}" placeholder="noreply@yourcompany.com"/>
+      </div>
+      <div class="form-group" style="display:flex;align-items:center;gap:10px">
+        <input type="checkbox" name="enabled" id="enabled" style="width:auto" {{ 'checked' if config.enabled == 'true' }}/>
+        <label for="enabled" style="margin:0;text-transform:none;letter-spacing:0;font-size:13.5px;cursor:pointer">Enable email notifications</label>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;background:var(--surface2);border-color:#3b82f633">
+      <p style="font-size:13px;color:var(--text-muted);line-height:1.7">
+        <strong style="color:var(--accent2)">💡 Gmail tip:</strong> Use an App Password instead of your main password.
+        Go to Google Account → Security → 2-Step Verification → App Passwords.
+        Notifications run daily at <strong style="font-family:var(--mono)">08:00</strong> server time.
+      </p>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Settings</button>
+  </form>
+</div>
+{% endblock %}

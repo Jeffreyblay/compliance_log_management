@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}{{ action }} Record — ComplianceLog{% endblock %}
+{% block page_title %}{{ action }} Record{% endblock %}
+{% block content %}
+<div style="max-width:720px">
+  <form method="post">
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><div class="card-title">Sample Details</div></div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Sample Date</label>
+          <input type="text" name="sample_date" value="{{ record.sample_date if record else '' }}" placeholder="e.g. 1212"/>
+        </div>
+        <div class="form-group">
+          <label>File Number</label>
+          <input type="text" name="file_num" value="{{ record.file_num if record else '' }}" placeholder="e.g. 1212"/>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Sample Number</label>
+          <input type="text" name="sample_num" value="{{ record.sample_num if record else '' }}" placeholder="e.g. 3"/>
+        </div>
+        <div class="form-group">
+          <label>Shore Tank</label>
+          <input type="text" name="shore_tank" value="{{ record.shore_tank if record else '' }}" placeholder="e.g. 43"/>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Level</label>
+          <input type="text" name="level" value="{{ record.level if record else '' }}" placeholder="e.g. 34"/>
+        </div>
+        <div class="form-group">
+          <label>Movement</label>
+          <input type="text" name="movement" value="{{ record.movement if record else '' }}" placeholder="e.g. eff"/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Condition</label>
+        <input type="text" name="condition" value="{{ record.condition if record else '' }}" placeholder="e.g. active, dgr"/>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><div class="card-title">Location &amp; Personnel</div></div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Cabinet Number</label>
+          <input type="text" name="cabinet_num" value="{{ record.cabinet_num if record else '' }}" placeholder="e.g. 453545"/>
+        </div>
+        <div class="form-group">
+          <label>Shelf Number</label>
+          <input type="text" name="shelf_num" value="{{ record.shelf_num if record else '' }}" placeholder="e.g. 778"/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Tech Initials</label>
+        <input type="text" name="tech_initials" value="{{ record.tech_initials if record else '' }}" placeholder="e.g. ert"/>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><div class="card-title">Due Date &amp; Notification</div></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Due Date</label>
+          <input type="date" name="due_date" value="{{ record.due_date if record else '' }}"/>
+        </div>
+        <div class="form-group">
+          <label>Notify X Days Before Due</label>
+          <input type="number" name="notify_days_before" value="{{ record.notify_days_before if record else 30 }}" min="1" max="365"/>
+        </div>
+      </div>
+    </div>
+
+    {% if record %}
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><div class="card-title">Notes</div></div>
+      <div class="form-group" style="margin-bottom:0">
+        <textarea name="notes" placeholder="Any additional notes…">{{ record.notes or '' }}</textarea>
+      </div>
+    </div>
+    {% endif %}
+
+    <div style="display:flex;gap:10px">
+      <button type="submit" class="btn btn-primary">{{ action }} Record</button>
+      <a href="{{ url_for('records') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

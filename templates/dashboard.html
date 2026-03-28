@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — ComplianceLog{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+
+<div class="stats-grid">
+  <div class="stat-card total"><div class="stat-label">Total Records</div><div class="stat-value">{{ total }}</div></div>
+  <div class="stat-card active"><div class="stat-label">Active</div><div class="stat-value">{{ active }}</div></div>
+  <div class="stat-card due_soon"><div class="stat-label">Due Soon</div><div class="stat-value">{{ due_soon }}</div></div>
+  <div class="stat-card overdue"><div class="stat-label">Overdue</div><div class="stat-value">{{ overdue }}</div></div>
+</div>
+
+{% if urgent %}
+<div class="card" style="margin-bottom:22px">
+  <div class="card-header">
+    <div class="card-title">⚠ Requires Attention</div>
+    <a href="{{ url_for('records') }}?status=overdue" class="btn btn-secondary btn-sm">View all overdue</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>File #</th><th>Sample #</th><th>Shore Tank</th><th>Condition</th>
+        <th>Cabinet</th><th>Shelf</th><th>Tech</th><th>Due Date</th><th>Days</th><th>Status</th>
+      </tr></thead>
+      <tbody>
+        {% for r in urgent %}
+        <tr>
+          <td><a href="{{ url_for('view_record', record_id=r.id) }}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ r.file_num or '—' }}</a></td>
+          <td class="mono">{{ r.sample_num or '—' }}</td>
+          <td>{{ r.shore_tank or '—' }}</td>
+          <td>{{ r.condition or '—' }}</td>
+          <td class="mono">{{ r.cabinet_num or '—' }}</td>
+          <td class="mono">{{ r.shelf_num or '—' }}</td>
+          <td class="mono">{{ r.tech_initials or '—' }}</td>
+          <td class="mono">{{ r.due_date or '—' }}</td>
+          <td class="mono">
+            {% if r.days_until_due is not none %}
+              {% if r.days_until_due < 0 %}<span style="color:var(--danger)">{{ r.days_until_due|abs }}d ago</span>
+              {% else %}<span style="color:var(--warning)">{{ r.days_until_due }}d</span>{% endif %}
+            {% else %}—{% endif %}
+          </td>
+          <td><span class="status-badge status-{{ r.status }}">{{ r.status_label }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">Recently Updated</div>
+    <a href="{{ url_for('records') }}" class="btn btn-secondary btn-sm">View All →</a>
+  </div>
+  <div class="table-wrap">
+    {% if recent %}
+    <table>
+      <thead><tr>
+        <th>File #</th><th>Sample #</th><th>Sample Date</th><th>Shore Tank</th>
+        <th>Condition</th><th>Cabinet</th><th>Shelf</th><th>Tech</th><th>Due Date</th><th>Status</th>
+      </tr></thead>
+      <tbody>
+        {% for r in recent %}
+        <tr>
+          <td><a href="{{ url_for('view_record', record_id=r.id) }}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ r.file_num or '—' }}</a></td>
+          <td class="mono">{{ r.sample_num or '—' }}</td>
+          <td class="mono">{{ r.sample_date or '—' }}</td>
+          <td>{{ r.shore_tank or '—' }}</td>
+          <td>{{ r.condition or '—' }}</td>
+          <td class="mono">{{ r.cabinet_num or '—' }}</td>
+          <td class="mono">{{ r.shelf_num or '—' }}</td>
+          <td class="mono">{{ r.tech_initials or '—' }}</td>
+          <td class="mono">{{ r.due_date or '—' }}</td>
+          <td><span class="status-badge status-{{ r.status }}">{{ r.status_label }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <p>No records yet. <a href="{{ url_for('import_csv') }}" style="color:var(--accent)">Import your CSV →</a></p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

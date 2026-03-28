@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}ComplianceLog{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#0f1520;--surface:#1a2332;--surface2:#22304a;--border:#2e3f58;
+      --accent:#3b82f6;--accent2:#06b6d4;--text:#e2e8f0;--text-muted:#8899aa;
+      --danger:#ef4444;--warning:#f59e0b;--success:#10b981;
+      --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;display:flex}
+    .sidebar{width:220px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100}
+    .sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid var(--border)}
+    .sidebar-logo span{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--accent2);letter-spacing:.05em;display:block}
+    .sidebar-logo small{color:var(--text-muted);font-size:11px;font-family:var(--mono)}
+    .sidebar nav{padding:12px 0;flex:1}
+    .sidebar nav a{display:flex;align-items:center;gap:10px;padding:9px 20px;color:var(--text-muted);text-decoration:none;font-size:13.5px;transition:all .15s;border-left:3px solid transparent}
+    .sidebar nav a:hover,.sidebar nav a.active{color:var(--text);background:var(--surface2);border-left-color:var(--accent)}
+    .sidebar nav .section-label{padding:12px 20px 4px;font-size:10px;font-family:var(--mono);color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase}
+    .main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between}
+    .topbar h1{font-size:17px;font-weight:500}
+    .content{padding:28px;flex:1}
+    .alert{padding:12px 16px;border-radius:6px;margin-bottom:16px;font-size:13.5px;border:1px solid}
+    .alert-success{background:#10b98115;border-color:#10b98133;color:#6ee7b7}
+    .alert-danger{background:#ef444415;border-color:#ef444433;color:#fca5a5}
+    .alert-warning{background:#f59e0b15;border-color:#f59e0b33;color:#fcd34d}
+    .alert-info{background:#3b82f615;border-color:#3b82f633;color:#93c5fd}
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;border:none;cursor:pointer;text-decoration:none;font-family:var(--sans);transition:all .15s}
+    .btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#2563eb}
+    .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{background:var(--border)}
+    .btn-danger{background:#ef444422;color:#fca5a5;border:1px solid #ef444433}.btn-danger:hover{background:var(--danger);color:#fff}
+    .btn-sm{padding:5px 10px;font-size:12px}
+    .status-badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-family:var(--mono);font-weight:600;letter-spacing:.03em}
+    .status-active{background:#10b98120;color:#6ee7b7;border:1px solid #10b98133}
+    .status-due_soon{background:#f59e0b20;color:#fcd34d;border:1px solid #f59e0b33}
+    .status-overdue{background:#ef444420;color:#fca5a5;border:1px solid #ef444433}
+    .status-no_due_date{background:#8899aa20;color:#8899aa;border:1px solid #8899aa33}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px}
+    .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .card-title{font-size:14px;font-weight:500;color:var(--text-muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em}
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th{text-align:left;padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text-muted);font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;font-weight:600;white-space:nowrap}
+    td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+    tr:hover td{background:var(--surface2)}
+    tr:last-child td{border-bottom:none}
+    .form-group{margin-bottom:16px}
+    label{display:block;margin-bottom:5px;font-size:11px;font-family:var(--mono);color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}
+    input,select,textarea{width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--sans);font-size:13.5px;outline:none;transition:border-color .15s}
+    input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+    textarea{min-height:80px;resize:vertical}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+    .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 20px;position:relative;overflow:hidden}
+    .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+    .stat-card.total::before{background:var(--accent)}
+    .stat-card.active::before{background:var(--success)}
+    .stat-card.due_soon::before{background:var(--warning)}
+    .stat-card.overdue::before{background:var(--danger)}
+    .stat-label{font-size:11px;font-family:var(--mono);color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em}
+    .stat-value{font-size:32px;font-family:var(--mono);font-weight:600;margin-top:4px}
+    .stat-card.total .stat-value{color:var(--accent)}
+    .stat-card.active .stat-value{color:var(--success)}
+    .stat-card.due_soon .stat-value{color:var(--warning)}
+    .stat-card.overdue .stat-value{color:var(--danger)}
+    .filter-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:flex-end}
+    .filter-bar input,.filter-bar select{width:auto;min-width:150px}
+    .empty-state{text-align:center;padding:60px 20px;color:var(--text-muted)}
+    .mono{font-family:var(--mono);font-size:12px;color:var(--text-muted)}
+  </style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span>◈ ComplianceLog</span>
+    <small>Retain Log Book System</small>
+  </div>
+  <nav>
+    <a href="{{ url_for('dashboard') }}"  class="{{ 'active' if request.endpoint=='dashboard' }}">▦ Dashboard</a>
+    <a href="{{ url_for('records') }}"    class="{{ 'active' if request.endpoint in ('records','view_record','edit_record','new_record') }}">☰ All Records</a>
+    <a href="{{ url_for('new_record') }}">+ Add Record</a>
+    <a href="{{ url_for('import_csv') }}" class="{{ 'active' if request.endpoint in ('import_csv','import_confirm') }}">⇪ Import CSV</a>
+    <div class="section-label">Config</div>
+    <a href="{{ url_for('settings') }}"   class="{{ 'active' if request.endpoint=='settings' }}">⚙ Email Settings</a>
+  </nav>
+</aside>
+<div class="main">
+  <div class="topbar">
+    <h1>{% block page_title %}{% endblock %}</h1>
+  </div>
+  <div class="content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </div>
+</div>
+</body>
+</html>
