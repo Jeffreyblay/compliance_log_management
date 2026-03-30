@@ -1,4 +1,4 @@
-# ◈ ComplianceLog
+# ◈ Compliance Log Management System
 
 **Open-source retain log book management system for Windows.**  
 Track sample records, due dates, cabinet locations and tech assignments — runs on your office network with no internet or subscriptions required.
