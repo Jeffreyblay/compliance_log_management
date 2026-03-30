@@ -2,7 +2,6 @@
 {% block title %}Dashboard — ComplianceLog{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
 {% block content %}
-
 <div class="stats-grid">
   <div class="stat-card total"><div class="stat-label">Total Records</div><div class="stat-value">{{ total }}</div></div>
   <div class="stat-card active"><div class="stat-label">Active</div><div class="stat-value">{{ active }}</div></div>
@@ -19,24 +18,23 @@
   <div class="table-wrap">
     <table>
       <thead><tr>
-        <th>File #</th><th>Sample #</th><th>Shore Tank</th><th>Condition</th>
-        <th>Cabinet</th><th>Shelf</th><th>Tech</th><th>Due Date</th><th>Days</th><th>Status</th>
+        <th>Product #</th><th>Version</th><th>Visibility</th>
+        <th>Cabinet</th><th>Shelf</th><th>Initials</th><th>Expiry Date</th><th>Days</th><th>Status</th>
       </tr></thead>
       <tbody>
         {% for r in urgent %}
         <tr>
-          <td><a href="{{ url_for('view_record', record_id=r.id) }}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ r.file_num or '—' }}</a></td>
-          <td class="mono">{{ r.sample_num or '—' }}</td>
-          <td>{{ r.shore_tank or '—' }}</td>
-          <td>{{ r.condition or '—' }}</td>
-          <td class="mono">{{ r.cabinet_num or '—' }}</td>
-          <td class="mono">{{ r.shelf_num or '—' }}</td>
-          <td class="mono">{{ r.tech_initials or '—' }}</td>
-          <td class="mono">{{ r.due_date or '—' }}</td>
+          <td><a href="{{ url_for('view_record', record_id=r.id) }}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ r.product_number or '—' }}</a></td>
+          <td class="mono">{{ r.version or '—' }}</td>
+          <td>{{ r.visibility or '—' }}</td>
+          <td class="mono">{{ r.cabinet_label or '—' }}</td>
+          <td class="mono">{{ r.shelf_label or '—' }}</td>
+          <td class="mono">{{ r.initials or '—' }}</td>
+          <td class="mono">{{ r.expiry_date or '—' }}</td>
           <td class="mono">
-            {% if r.days_until_due is not none %}
-              {% if r.days_until_due < 0 %}<span style="color:var(--danger)">{{ r.days_until_due|abs }}d ago</span>
-              {% else %}<span style="color:var(--warning)">{{ r.days_until_due }}d</span>{% endif %}
+            {% if r.days_until_expiry is not none %}
+              {% if r.days_until_expiry < 0 %}<span style="color:var(--danger)">{{ r.days_until_expiry|abs }}d ago</span>
+              {% else %}<span style="color:var(--warning)">{{ r.days_until_expiry }}d</span>{% endif %}
             {% else %}—{% endif %}
           </td>
           <td><span class="status-badge status-{{ r.status }}">{{ r.status_label }}</span></td>
@@ -57,21 +55,20 @@
     {% if recent %}
     <table>
       <thead><tr>
-        <th>File #</th><th>Sample #</th><th>Sample Date</th><th>Shore Tank</th>
-        <th>Condition</th><th>Cabinet</th><th>Shelf</th><th>Tech</th><th>Due Date</th><th>Status</th>
+        <th>Product #</th><th>Version</th><th>Input Date</th><th>Visibility</th>
+        <th>Cabinet</th><th>Shelf</th><th>Initials</th><th>Expiry Date</th><th>Status</th>
       </tr></thead>
       <tbody>
         {% for r in recent %}
         <tr>
-          <td><a href="{{ url_for('view_record', record_id=r.id) }}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ r.file_num or '—' }}</a></td>
-          <td class="mono">{{ r.sample_num or '—' }}</td>
-          <td class="mono">{{ r.sample_date or '—' }}</td>
-          <td>{{ r.shore_tank or '—' }}</td>
-          <td>{{ r.condition or '—' }}</td>
-          <td class="mono">{{ r.cabinet_num or '—' }}</td>
-          <td class="mono">{{ r.shelf_num or '—' }}</td>
-          <td class="mono">{{ r.tech_initials or '—' }}</td>
-          <td class="mono">{{ r.due_date or '—' }}</td>
+          <td><a href="{{ url_for('view_record', record_id=r.id) }}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ r.product_number or '—' }}</a></td>
+          <td class="mono">{{ r.version or '—' }}</td>
+          <td class="mono">{{ r.input_date or '—' }}</td>
+          <td>{{ r.visibility or '—' }}</td>
+          <td class="mono">{{ r.cabinet_label or '—' }}</td>
+          <td class="mono">{{ r.shelf_label or '—' }}</td>
+          <td class="mono">{{ r.initials or '—' }}</td>
+          <td class="mono">{{ r.expiry_date or '—' }}</td>
           <td><span class="status-badge status-{{ r.status }}">{{ r.status_label }}</span></td>
         </tr>
         {% endfor %}
@@ -79,7 +76,7 @@
     </table>
     {% else %}
     <div class="empty-state">
-      <p>No records yet. <a href="{{ url_for('import_csv') }}" style="color:var(--accent)">Import your CSV →</a></p>
+      <p>No records yet. <a href="{{ url_for('import_csv') }}" style="color:var(--accent)">Import your file →</a></p>
     </div>
     {% endif %}
   </div>

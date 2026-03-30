@@ -18,8 +18,8 @@ init_db(app)
 def parse_date(val):
     if not val or not str(val).strip(): return None
     for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y",
-                "%m-%d-%Y", "%d %b %Y", "%B %d, %Y", "%-m/%-d/%Y"):
-        try: return datetime.strptime(str(val).strip(), fmt).date()
+                "%m-%d-%Y", "%d %b %Y", "%B %d, %Y", "%Y-%m-%d %H:%M:%S"):
+        try: return datetime.strptime(str(val).strip().split(" ")[0] if "00:00:00" in str(val) else str(val).strip(), fmt).date()
         except: continue
     return None
 
@@ -38,7 +38,7 @@ def dashboard():
     recent   = LogRecord.query.order_by(LogRecord.updated_at.desc()).limit(8).all()
     urgent   = LogRecord.query.filter(
         LogRecord.status.in_(["due_soon","overdue"])
-    ).order_by(LogRecord.due_date).all()
+    ).order_by(LogRecord.expiry_date).all()
     return render_template("dashboard.html",
         total=total, active=active, due_soon=due_soon,
         overdue=overdue, recent=recent, urgent=urgent)
@@ -48,60 +48,56 @@ def dashboard():
 @app.route("/records")
 def records():
     query = LogRecord.query
-
-    search        = request.args.get("search", "").strip()
-    status_filter = request.args.get("status", "")
-    cond_filter   = request.args.get("condition", "")
-    sort_by       = request.args.get("sort", "due_date")
+    search         = request.args.get("search", "").strip()
+    status_filter  = request.args.get("status", "")
+    vis_filter     = request.args.get("visibility", "")
+    sort_by        = request.args.get("sort", "expiry_date")
 
     if search:
         query = query.filter(
-            LogRecord.file_num.ilike(f"%{search}%")      |
-            LogRecord.sample_num.ilike(f"%{search}%")    |
-            LogRecord.shore_tank.ilike(f"%{search}%")    |
-            LogRecord.tech_initials.ilike(f"%{search}%") |
-            LogRecord.cabinet_num.ilike(f"%{search}%")   |
-            LogRecord.movement.ilike(f"%{search}%")
+            LogRecord.product_number.ilike(f"%{search}%") |
+            LogRecord.version.ilike(f"%{search}%")        |
+            LogRecord.initials.ilike(f"%{search}%")       |
+            LogRecord.cabinet_label.ilike(f"%{search}%")  |
+            LogRecord.shelf_label.ilike(f"%{search}%")    |
+            LogRecord.visibility.ilike(f"%{search}%")
         )
     if status_filter:
         query = query.filter_by(status=status_filter)
-    if cond_filter:
-        query = query.filter_by(condition=cond_filter)
+    if vis_filter:
+        query = query.filter_by(visibility=vis_filter)
 
     sort_map = {
-        "due_date":   LogRecord.due_date,
-        "sample_date":LogRecord.sample_date,
-        "file_num":   LogRecord.file_num,
-        "status":     LogRecord.status,
-        "updated_at": LogRecord.updated_at.desc(),
+        "expiry_date": LogRecord.expiry_date,
+        "input_date":  LogRecord.input_date,
+        "product_number": LogRecord.product_number,
+        "status":      LogRecord.status,
+        "updated_at":  LogRecord.updated_at.desc(),
     }
-    query = query.order_by(sort_map.get(sort_by, LogRecord.due_date))
+    query = query.order_by(sort_map.get(sort_by, LogRecord.expiry_date))
 
-    all_records = query.all()
-    conditions  = db.session.query(LogRecord.condition).distinct().all()
-    conditions  = sorted([c[0] for c in conditions if c[0]])
+    all_records  = query.all()
+    visibilities = db.session.query(LogRecord.visibility).distinct().all()
+    visibilities = sorted([v[0] for v in visibilities if v[0]])
 
     return render_template("records.html",
         records=all_records, search=search,
-        status_filter=status_filter, cond_filter=cond_filter,
-        sort_by=sort_by, conditions=conditions)
+        status_filter=status_filter, vis_filter=vis_filter,
+        sort_by=sort_by, visibilities=visibilities)
 
 @app.route("/records/new", methods=["GET", "POST"])
 def new_record():
     if request.method == "POST":
         record = LogRecord(
-            sample_date   = request.form.get("sample_date","").strip() or None,
-            file_num      = request.form.get("file_num","").strip() or None,
-            sample_num    = request.form.get("sample_num","").strip() or None,
-            shore_tank    = request.form.get("shore_tank","").strip() or None,
-            level         = request.form.get("level","").strip() or None,
-            movement      = request.form.get("movement","").strip() or None,
-            condition     = request.form.get("condition","").strip() or None,
-            cabinet_num   = request.form.get("cabinet_num","").strip() or None,
-            shelf_num     = request.form.get("shelf_num","").strip() or None,
-            due_date      = parse_date(request.form.get("due_date","")),
-            tech_initials = request.form.get("tech_initials","").strip() or None,
-            notes         = request.form.get("notes","").strip() or None,
+            input_date     = request.form.get("input_date","").strip() or None,
+            product_number = request.form.get("product_number","").strip() or None,
+            version        = request.form.get("version","").strip() or None,
+            visibility     = request.form.get("visibility","").strip() or None,
+            cabinet_label  = request.form.get("cabinet_label","").strip() or None,
+            shelf_label    = request.form.get("shelf_label","").strip() or None,
+            expiry_date    = parse_date(request.form.get("expiry_date","")),
+            initials       = request.form.get("initials","").strip() or None,
+            notes          = request.form.get("notes","").strip() or None,
             notify_days_before = int(request.form.get("notify_days_before", 30) or 30),
         )
         record.refresh_status()
@@ -120,17 +116,14 @@ def view_record(record_id):
 def edit_record(record_id):
     record = LogRecord.query.get_or_404(record_id)
     if request.method == "POST":
-        record.sample_date    = request.form.get("sample_date","").strip() or None
-        record.file_num       = request.form.get("file_num","").strip() or None
-        record.sample_num     = request.form.get("sample_num","").strip() or None
-        record.shore_tank     = request.form.get("shore_tank","").strip() or None
-        record.level          = request.form.get("level","").strip() or None
-        record.movement       = request.form.get("movement","").strip() or None
-        record.condition      = request.form.get("condition","").strip() or None
-        record.cabinet_num    = request.form.get("cabinet_num","").strip() or None
-        record.shelf_num      = request.form.get("shelf_num","").strip() or None
-        record.due_date       = parse_date(request.form.get("due_date",""))
-        record.tech_initials  = request.form.get("tech_initials","").strip() or None
+        record.input_date     = request.form.get("input_date","").strip() or None
+        record.product_number = request.form.get("product_number","").strip() or None
+        record.version        = request.form.get("version","").strip() or None
+        record.visibility     = request.form.get("visibility","").strip() or None
+        record.cabinet_label  = request.form.get("cabinet_label","").strip() or None
+        record.shelf_label    = request.form.get("shelf_label","").strip() or None
+        record.expiry_date    = parse_date(request.form.get("expiry_date",""))
+        record.initials       = request.form.get("initials","").strip() or None
         record.notes          = request.form.get("notes","").strip() or None
         record.notify_days_before = int(request.form.get("notify_days_before", 30) or 30)
         record.refresh_status()
@@ -181,54 +174,68 @@ def refresh_statuses():
     db.session.commit()
     return jsonify({"updated": len(all_records)})
 
-# ─── CSV Import ───────────────────────────────────────────────────────────────
+# ─── CSV / Excel Import ───────────────────────────────────────────────────────
 
 FIELD_MAP_OPTIONS = [
-    ("sample_date",   "Sample Date"),
-    ("file_num",      "File Number"),
-    ("sample_num",    "Sample Number"),
-    ("shore_tank",    "Shore Tank"),
-    ("level",         "Level"),
-    ("movement",      "Movement"),
-    ("condition",     "Condition"),
-    ("cabinet_num",   "Cabinet Number"),
-    ("shelf_num",     "Shelf Number"),
-    ("due_date",      "Due Date"),
-    ("tech_initials", "Tech Initials"),
-    ("notes",         "Notes"),
-    ("__skip__",      "— Skip this column —"),
+    ("input_date",     "Input Date"),
+    ("product_number", "Product Number"),
+    ("version",        "Version"),
+    ("visibility",     "Visibility"),
+    ("cabinet_label",  "Cabinet Label"),
+    ("shelf_label",    "Shelf Label"),
+    ("expiry_date",    "Expiry Date"),
+    ("initials",       "Initials"),
+    ("notes",          "Notes"),
+    ("__skip__",       "— Skip this column —"),
 ]
 
-# Auto-guess mapping from common header variants
 GUESSES = {
-    "sample_date":   ["sample_date","sample date","date","sampledate"],
-    "file_num":      ["file_num","file _num","file num","filenum","file_number","file number","file no"],
-    "sample_num":    ["sample_num","sample _num","sample num","samplenum","sample_number","sample number","sample no"],
-    "shore_tank":    ["shoretank","shore_tank","shore tank","tank"],
-    "level":         ["level","lvl"],
-    "movement":      ["movement","move"],
-    "condition":     ["condition","cond","state"],
-    "cabinet_num":   ["cabinet_num","cabinet _num","cabinet num","cabinetnum","cabinet","cabinet number","cabinet no"],
-    "shelf_num":     ["shelf_num","shelf _num","shelf num","shelfnum","shelf","shelf number","shelf no"],
-    "due_date":      ["due_date","due date","duedate","due","expiry","expiry_date","expiration","expires"],
-    "tech_initials": ["tech_initials","tech initials","tech","initials","technician"],
-    "notes":         ["notes","note","comments","remarks"],
+    "input_date":     ["input_date","input date","date","inputdate","sample_date","sample date"],
+    "product_number": ["product_number","product number","product_num","product num",
+                       "productnumber","product_no","product no","file_num","file num",
+                       "file_number","file number"],
+    "version":        ["version","ver","version_","sample_num","sample num","sample_number"],
+    "visibility":     ["visibility","visibility  ","visible","condition","state","status"],
+    "cabinet_label":  ["cabinet_label","cabinet label","cabinet","cabinet_num",
+                       "cabinet num","cabinet_number","cabinet number"],
+    "shelf_label":    ["shelf_label","shelf label","shelf","shelf_num",
+                       "shelf num","shelf_number","shelf number"],
+    "expiry_date":    ["expiry_date","expiry date","expiry","expiration","expires",
+                       "due_date","due date","valid_until","valid until"],
+    "initials":       ["initials","initials ","tech_initials","tech initials",
+                       "tech","worker","assigned_to"],
+    "notes":          ["notes","note","comments","remarks","description"],
 }
 
 @app.route("/import", methods=["GET", "POST"])
 def import_csv():
     if request.method == "POST" and "csv_file" in request.files:
         f = request.files["csv_file"]
-        if not f.filename.lower().endswith(".csv"):
-            flash("Please upload a .csv file.", "danger")
+        fname = f.filename.lower()
+
+        # Support both CSV and Excel
+        if fname.endswith(".xlsx") or fname.endswith(".xls"):
+            import pandas as pd
+            df = pd.read_excel(f)
+            # Clean column names (strip whitespace)
+            df.columns = [str(c).strip() for c in df.columns]
+            # Drop unnamed index columns
+            df = df.loc[:, ~df.columns.str.startswith("Unnamed")]
+            headers = df.columns.tolist()
+            rows = df.astype(str).replace("nan","").to_dict(orient="records")
+        elif fname.endswith(".csv"):
+            content = f.read().decode("utf-8-sig", errors="replace")
+            reader  = csv.DictReader(io.StringIO(content))
+            headers = [h.strip() for h in (reader.fieldnames or [])]
+            rows    = [{k.strip(): v for k,v in row.items()} for row in reader]
+        else:
+            flash("Please upload a .csv or .xlsx file.", "danger")
             return redirect(url_for("import_csv"))
-        content = f.read().decode("utf-8-sig", errors="replace")
-        reader  = csv.DictReader(io.StringIO(content))
-        headers = reader.fieldnames or []
-        rows    = list(reader)
+
         if not headers:
-            flash("CSV appears empty or has no headers.", "danger")
+            flash("File appears empty or has no headers.", "danger")
             return redirect(url_for("import_csv"))
+
         auto_map = {}
         for h in headers:
             hl = h.lower().strip().replace(" ","_").replace("-","_")
@@ -236,6 +243,7 @@ def import_csv():
             for field, kws in GUESSES.items():
                 if hl in kws: matched = field; break
             auto_map[h] = matched
+
         session["import_rows"]    = rows
         session["import_headers"] = headers
         session["import_auto_map"]= auto_map
@@ -249,7 +257,7 @@ def import_confirm():
     rows    = session.get("import_rows", [])
     headers = session.get("import_headers", [])
     if not rows:
-        flash("No import data. Please upload your CSV again.", "warning")
+        flash("No import data. Please upload your file again.", "warning")
         return redirect(url_for("import_csv"))
     mapping = {h: request.form.get(f"map_{h}","__skip__") for h in headers}
     mapping = {h: f for h, f in mapping.items() if f != "__skip__"}
@@ -258,36 +266,30 @@ def import_confirm():
     for row in rows:
         data = {field: str(row.get(col,"")).strip() for col, field in mapping.items()}
 
-        # Need at least a file_num or sample_num to be meaningful
-        if not data.get("file_num") and not data.get("sample_num"):
+        if not data.get("product_number") and not data.get("version"):
             skipped += 1; continue
 
-        # Match existing record by file_num + sample_num
-        file_num   = data.get("file_num") or None
-        sample_num = data.get("sample_num") or None
+        prod = data.get("product_number") or None
+        ver  = data.get("version") or None
         record = None
-        if file_num and sample_num:
-            record = LogRecord.query.filter_by(
-                file_num=file_num, sample_num=sample_num).first()
-        elif file_num:
-            record = LogRecord.query.filter_by(file_num=file_num).first()
+        if prod and ver:
+            record = LogRecord.query.filter_by(product_number=prod, version=ver).first()
+        elif prod:
+            record = LogRecord.query.filter_by(product_number=prod).first()
 
         if record is None:
             record = LogRecord(); db.session.add(record); created += 1
         else:
             updated += 1
 
-        record.sample_date    = data.get("sample_date") or None
-        record.file_num       = file_num
-        record.sample_num     = sample_num
-        record.shore_tank     = data.get("shore_tank") or None
-        record.level          = data.get("level") or None
-        record.movement       = data.get("movement") or None
-        record.condition      = data.get("condition") or None
-        record.cabinet_num    = data.get("cabinet_num") or None
-        record.shelf_num      = data.get("shelf_num") or None
-        record.due_date       = parse_date(data.get("due_date",""))
-        record.tech_initials  = data.get("tech_initials") or None
+        record.input_date     = data.get("input_date") or None
+        record.product_number = prod
+        record.version        = ver
+        record.visibility     = data.get("visibility") or None
+        record.cabinet_label  = data.get("cabinet_label") or None
+        record.shelf_label    = data.get("shelf_label") or None
+        record.expiry_date    = parse_date(data.get("expiry_date",""))
+        record.initials       = data.get("initials") or None
         record.notes          = data.get("notes") or None
         record.refresh_status()
 

@@ -2,16 +2,16 @@
 {% block title %}{{ record.display_name }} — ComplianceLog{% endblock %}
 {% block page_title %}Record Detail{% endblock %}
 {% block content %}
-<div style="max-width:700px">
+<div style="max-width:660px">
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:10px">
     <div>
       <h2 style="font-size:20px;font-weight:600;margin-bottom:6px">{{ record.display_name }}</h2>
       <span class="status-badge status-{{ record.status }}">{{ record.status_label }}</span>
-      {% if record.days_until_due is not none %}
-        {% if record.days_until_due < 0 %}
-          <span style="font-family:var(--mono);font-size:12px;color:var(--danger);margin-left:8px">{{ record.days_until_due|abs }} days overdue</span>
+      {% if record.days_until_expiry is not none %}
+        {% if record.days_until_expiry < 0 %}
+          <span style="font-family:var(--mono);font-size:12px;color:var(--danger);margin-left:8px">{{ record.days_until_expiry|abs }} days overdue</span>
         {% else %}
-          <span style="font-family:var(--mono);font-size:12px;color:var(--text-muted);margin-left:8px">due in {{ record.days_until_due }} days</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--text-muted);margin-left:8px">expires in {{ record.days_until_expiry }} days</span>
         {% endif %}
       {% endif %}
     </div>
@@ -24,45 +24,42 @@
   </div>
 
   <div class="card" style="margin-bottom:16px">
-    <div class="card-header"><div class="card-title">Sample Details</div></div>
+    <div class="card-header"><div class="card-title">Product Details</div></div>
     <table style="width:100%">
-      {% macro row(label, value) %}
+      {% macro row(label, value, mono=false) %}
       <tr>
         <td style="padding:9px 0;width:160px;font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);border-bottom:1px solid var(--border)">{{ label }}</td>
-        <td style="padding:9px 0;border-bottom:1px solid var(--border);font-size:13px">{{ value or '—' }}</td>
+        <td style="padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;{% if mono %}font-family:var(--mono);{% endif %}">{{ value or '—' }}</td>
       </tr>
       {% endmacro %}
-      {{ row('Sample Date',  record.sample_date) }}
-      {{ row('File Number',  record.file_num) }}
-      {{ row('Sample Number',record.sample_num) }}
-      {{ row('Shore Tank',   record.shore_tank) }}
-      {{ row('Level',        record.level) }}
-      {{ row('Movement',     record.movement) }}
-      {{ row('Condition',    record.condition) }}
+      {{ row('Input Date',     record.input_date) }}
+      {{ row('Product Number', record.product_number, true) }}
+      {{ row('Version',        record.version, true) }}
+      {{ row('Visibility',     record.visibility) }}
+      {{ row('Initials',       record.initials, true) }}
     </table>
   </div>
 
   <div class="card" style="margin-bottom:16px">
-    <div class="card-header"><div class="card-title">Location &amp; Personnel</div></div>
+    <div class="card-header"><div class="card-title">Location</div></div>
     <table style="width:100%">
-      {% macro row2(label, value) %}
       <tr>
-        <td style="padding:9px 0;width:160px;font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);border-bottom:1px solid var(--border)">{{ label }}</td>
-        <td style="padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;font-family:var(--mono)">{{ value or '—' }}</td>
+        <td style="padding:9px 0;width:160px;font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);border-bottom:1px solid var(--border)">Cabinet Label</td>
+        <td style="padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;font-family:var(--mono)">{{ record.cabinet_label or '—' }}</td>
       </tr>
-      {% endmacro %}
-      {{ row2('Cabinet Number', record.cabinet_num) }}
-      {{ row2('Shelf Number',   record.shelf_num) }}
-      {{ row2('Tech Initials',  record.tech_initials) }}
+      <tr>
+        <td style="padding:9px 0;font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted)">Shelf Label</td>
+        <td style="padding:9px 0;font-size:13px;font-family:var(--mono)">{{ record.shelf_label or '—' }}</td>
+      </tr>
     </table>
   </div>
 
   <div class="card" style="margin-bottom:16px">
-    <div class="card-header"><div class="card-title">Due Date</div></div>
+    <div class="card-header"><div class="card-title">Expiry</div></div>
     <table style="width:100%">
       <tr>
-        <td style="padding:9px 0;width:160px;font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);border-bottom:1px solid var(--border)">Due Date</td>
-        <td style="padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;font-family:var(--mono)">{{ record.due_date or '—' }}</td>
+        <td style="padding:9px 0;width:160px;font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);border-bottom:1px solid var(--border)">Expiry Date</td>
+        <td style="padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;font-family:var(--mono)">{{ record.expiry_date or '—' }}</td>
       </tr>
       <tr>
         <td style="padding:9px 0;font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted)">Notify Before</td>

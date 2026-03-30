@@ -2,11 +2,10 @@
 {% block title %}Records — ComplianceLog{% endblock %}
 {% block page_title %}All Records{% endblock %}
 {% block content %}
-
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
   <div style="color:var(--text-muted);font-size:13px">{{ records|length }} record(s)</div>
   <div style="display:flex;gap:8px">
-    <a href="{{ url_for('import_csv') }}" class="btn btn-secondary btn-sm">⇪ Import CSV</a>
+    <a href="{{ url_for('import_csv') }}" class="btn btn-secondary btn-sm">⇪ Import</a>
     <a href="{{ url_for('new_record') }}" class="btn btn-primary btn-sm">+ Add Record</a>
   </div>
 </div>
@@ -14,35 +13,35 @@
 <form method="get" class="filter-bar">
   <div>
     <label style="display:block;font-size:10px;font-family:var(--mono);color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Search</label>
-    <input type="text" name="search" value="{{ search }}" placeholder="File #, Sample #, Tank, Tech…" style="width:220px"/>
+    <input type="text" name="search" value="{{ search }}" placeholder="Product #, version, initials…" style="width:220px"/>
   </div>
   <div>
     <label style="display:block;font-size:10px;font-family:var(--mono);color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Status</label>
     <select name="status">
       <option value="">All statuses</option>
-      <option value="active"       {{ 'selected' if status_filter=='active' }}>Active</option>
-      <option value="due_soon"     {{ 'selected' if status_filter=='due_soon' }}>Due Soon</option>
-      <option value="overdue"      {{ 'selected' if status_filter=='overdue' }}>Overdue</option>
-      <option value="no_due_date"  {{ 'selected' if status_filter=='no_due_date' }}>No Due Date</option>
+      <option value="active"     {{ 'selected' if status_filter=='active' }}>Active</option>
+      <option value="due_soon"   {{ 'selected' if status_filter=='due_soon' }}>Due Soon</option>
+      <option value="overdue"    {{ 'selected' if status_filter=='overdue' }}>Overdue</option>
+      <option value="no_expiry"  {{ 'selected' if status_filter=='no_expiry' }}>No Expiry</option>
     </select>
   </div>
   <div>
-    <label style="display:block;font-size:10px;font-family:var(--mono);color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Condition</label>
-    <select name="condition">
-      <option value="">All conditions</option>
-      {% for c in conditions %}
-      <option value="{{ c }}" {{ 'selected' if cond_filter==c }}>{{ c }}</option>
+    <label style="display:block;font-size:10px;font-family:var(--mono);color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Visibility</label>
+    <select name="visibility">
+      <option value="">All</option>
+      {% for v in visibilities %}
+      <option value="{{ v }}" {{ 'selected' if vis_filter==v }}>{{ v }}</option>
       {% endfor %}
     </select>
   </div>
   <div>
     <label style="display:block;font-size:10px;font-family:var(--mono);color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Sort By</label>
     <select name="sort">
-      <option value="due_date"    {{ 'selected' if sort_by=='due_date' }}>Due Date</option>
-      <option value="sample_date" {{ 'selected' if sort_by=='sample_date' }}>Sample Date</option>
-      <option value="file_num"    {{ 'selected' if sort_by=='file_num' }}>File #</option>
-      <option value="status"      {{ 'selected' if sort_by=='status' }}>Status</option>
-      <option value="updated_at"  {{ 'selected' if sort_by=='updated_at' }}>Last Updated</option>
+      <option value="expiry_date"    {{ 'selected' if sort_by=='expiry_date' }}>Expiry Date</option>
+      <option value="input_date"     {{ 'selected' if sort_by=='input_date' }}>Input Date</option>
+      <option value="product_number" {{ 'selected' if sort_by=='product_number' }}>Product #</option>
+      <option value="status"         {{ 'selected' if sort_by=='status' }}>Status</option>
+      <option value="updated_at"     {{ 'selected' if sort_by=='updated_at' }}>Last Updated</option>
     </select>
   </div>
   <div style="align-self:flex-end;display:flex;gap:6px">
@@ -56,30 +55,26 @@
     {% if records %}
     <table>
       <thead><tr>
-        <th>File #</th><th>Sample #</th><th>Sample Date</th><th>Shore Tank</th>
-        <th>Level</th><th>Movement</th><th>Condition</th>
-        <th>Cabinet</th><th>Shelf</th><th>Tech</th>
-        <th>Due Date</th><th>Days Left</th><th>Status</th><th></th>
+        <th>Product #</th><th>Version</th><th>Input Date</th><th>Visibility</th>
+        <th>Cabinet</th><th>Shelf</th><th>Initials</th>
+        <th>Expiry Date</th><th>Days Left</th><th>Status</th><th></th>
       </tr></thead>
       <tbody>
         {% for r in records %}
         <tr>
-          <td><a href="{{ url_for('view_record', record_id=r.id) }}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ r.file_num or '—' }}</a></td>
-          <td class="mono">{{ r.sample_num or '—' }}</td>
-          <td class="mono">{{ r.sample_date or '—' }}</td>
-          <td>{{ r.shore_tank or '—' }}</td>
-          <td class="mono">{{ r.level or '—' }}</td>
-          <td style="font-size:12px">{{ r.movement or '—' }}</td>
-          <td>{{ r.condition or '—' }}</td>
-          <td class="mono">{{ r.cabinet_num or '—' }}</td>
-          <td class="mono">{{ r.shelf_num or '—' }}</td>
-          <td class="mono">{{ r.tech_initials or '—' }}</td>
-          <td class="mono">{{ r.due_date or '—' }}</td>
+          <td><a href="{{ url_for('view_record', record_id=r.id) }}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ r.product_number or '—' }}</a></td>
+          <td class="mono">{{ r.version or '—' }}</td>
+          <td class="mono">{{ r.input_date or '—' }}</td>
+          <td style="font-size:12px">{{ r.visibility or '—' }}</td>
+          <td class="mono">{{ r.cabinet_label or '—' }}</td>
+          <td class="mono">{{ r.shelf_label or '—' }}</td>
+          <td class="mono">{{ r.initials or '—' }}</td>
+          <td class="mono">{{ r.expiry_date or '—' }}</td>
           <td class="mono">
-            {% if r.days_until_due is not none %}
-              {% if r.days_until_due < 0 %}<span style="color:var(--danger)">{{ r.days_until_due|abs }}d ago</span>
-              {% elif r.days_until_due <= 30 %}<span style="color:var(--warning)">{{ r.days_until_due }}d</span>
-              {% else %}<span style="color:var(--text-muted)">{{ r.days_until_due }}d</span>{% endif %}
+            {% if r.days_until_expiry is not none %}
+              {% if r.days_until_expiry < 0 %}<span style="color:var(--danger)">{{ r.days_until_expiry|abs }}d ago</span>
+              {% elif r.days_until_expiry <= 30 %}<span style="color:var(--warning)">{{ r.days_until_expiry }}d</span>
+              {% else %}<span style="color:var(--text-muted)">{{ r.days_until_expiry }}d</span>{% endif %}
             {% else %}—{% endif %}
           </td>
           <td><span class="status-badge status-{{ r.status }}">{{ r.status_label }}</span></td>
